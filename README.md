@@ -1,6 +1,7 @@
 
 > Open this page at [https://nightgamingttv.github.io/asuse/](https://nightgamingttv.github.io/asuse/)
 
+## This is the firmware for WiredOS 
 ## Use as Extension
 
 This repository can be added as an **extension** in MakeCode.
