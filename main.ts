@@ -288,9 +288,10 @@ function Diagnostic(): number {
     serial.writeString("" + fakepacket[0])
     serial.writeLine("Beginning Command handler check")
     if (commandHandler(fakepacket, fakepacket.length, HDevID[0]) == 1) {
-        
+        console.log("command handler: PASS")
     } else {
-        control.waitMicros(4000000)
+        console.log("command handler: FAILED")
+        return 0
     }
     
     serial.writeLine("clearing Client")

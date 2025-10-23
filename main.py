@@ -222,9 +222,10 @@ def Diagnostic():
     serial.write_string("" + (fakepacket[0]))
     serial.write_line("Beginning Command handler check")
     if commandHandler(fakepacket, len(fakepacket), HDevID[0]) == 1:
-        pass
+        print("command handler: PASS")
     else:
-        control.wait_micros(4000000)
+        print("command handler: FAILED")
+        return 0
     serial.write_line("clearing Client")
     deleteClient(421)
     return 1
