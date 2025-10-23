@@ -32,13 +32,14 @@ function deleteClient(ID: number): number {
 
 function commandHandler(Packet: any[], Buffer2: number, serialN: number): number {
     
-    serial.writeLine("Packet received: " + ":" + ("" + Packet[1]))
+    serial.writeLine("Packet received: " + ":" + ("" + ("" + Packet[1])))
+    serial.writeLine("Packet received: " + ":" + ("" + ("" + Packet[1])) + "Serial number:" + ("" + serialN))
     for (let value of HDevID) {
         if (convertToText(FBV1(convertToText(serialN))) == convertToText(value)) {
             if (Packet[1] == "CMD") {
                 CMD1 = convertToText(Packet[3])
                 unCMD1 = _py.py_string_split(CMD1, ",")
-                serial.writeLine("CHecking Command:" + unCMD1[0] + ":" + ("" + Packet[3]))
+                serial.writeLine("CHecking Command:" + unCMD1[0] + ":" + ("" + ("" + Packet[3])))
                 if (unCMD1[0] == "reboot") {
                     control.reset()
                     return 1
@@ -69,16 +70,7 @@ function commandHandler(Packet: any[], Buffer2: number, serialN: number): number
 }
 
 function FBV1(data: string): number {
-    let b_val: number;
-    
-    hash2 = 2166136261
-    j = 0
-    while (j <= data.length - 1) {
-        b_val = data.charCodeAt(j)
-        hash2 = hash2 * 16777619 & 0xffffffff
-        j += 1
-    }
-    return hash2
+    return sec.FNV1aHash(data)
 }
 
 function packetHandler(serialN2: number, Signal_strength: number, Data: string, buffer: number): number {
@@ -134,14 +126,15 @@ function packetHelper(From: number, Mode: number, To: number, data2: string, buf
 
 function boot() {
     
+    channel = 0
     bState = 0
+    MClients = 15
     config()
     Diagnostic()
     serial.writeNumbers(Clients)
     serial.writeNumbers(clientvirtualmap)
     serial.writeNumbers(Lease)
     serial.writeNumbers(HDevID)
-    radio.setGroup(0)
     serial.writeLine("AIOS-DSPS-1")
     serial.writeLine(control.deviceName())
     serial.writeLine("Serial Number:" + ("" + ("" + control.deviceSerialNumber())))
@@ -159,6 +152,10 @@ function boot() {
 
 function config() {
     
+    radio.setGroup(channel)
+    Lease = []
+    clientvirtualmap = []
+    Clients = []
     for (let index5 = 0; index5 < MClients; index5++) {
         Clients.push(0)
         clientvirtualmap.push(0)
@@ -171,7 +168,6 @@ function config() {
         HDevID.push(result)
     }
     result = 0
-    MClients = 15
     proName = "A.I-Mobile"
     hSerial = FBV1(convertToText(control.deviceSerialNumber()))
     LeaseT = 3
@@ -258,6 +254,32 @@ function leaseCheck() {
     }
 }
 
+function SerialHandler(message: string, param1: string, Param2: string) {
+    if (message.includes("help")) {
+        serial.writeLine("-- WiredOS V1.90 based on AIOS --")
+        serial.writeLine("channel")
+        serial.writeLine("client")
+        serial.writeLine("Diagnostic")
+        serial.writeLine("unlock")
+        serial.writeLine("lock")
+    } else if (false) {
+        
+    } else if (false) {
+        
+    } else if (false) {
+        
+    } else if (false) {
+        
+    } else if (false) {
+        
+    } else if (false) {
+        
+    } else {
+        serial.writeLine("Command not found")
+    }
+    
+}
+
 function Diagnostic(): number {
     
     if (ClientHelper(421, 0)) {
@@ -287,7 +309,7 @@ function Diagnostic(): number {
     fakepacket = ["192", "CMD", "999", "Channel,1"]
     serial.writeString("" + fakepacket[0])
     serial.writeLine("Beginning Command handler check")
-    if (commandHandler(fakepacket, fakepacket.length, HDevID[0]) == 1) {
+    if (commandHandler(fakepacket, fakepacket.length, DevID[0]) == 1) {
         
     } else {
         control.waitMicros(4000000)
@@ -309,15 +331,15 @@ let result = 0
 let DevID : number[] = []
 let hSerial = 0
 let bState = 0
-let j = 0
-let unCMD1 : string[] = []
-let CMD1 = ""
+let channel = 0
 let HDevID : number[] = []
 let index4 = 0
 let Lease : number[] = []
 let clientvirtualmap : number[] = []
 let MClients = 0
 let Clients : number[] = []
+let unCMD1 : string[] = []
+let CMD1 = ""
 let hash2 = 0
 let k = 0
 let Packet2 : string[] = []

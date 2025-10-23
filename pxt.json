@@ -1,11 +1,11 @@
 {
     "name": "ASUES",
-    "version": "1.0.0",
     "description": "",
     "dependencies": {
         "core": "*",
         "radio": "*",
-        "microphone": "*"
+        "microphone": "*",
+        "FNV1-PXT": "github:nightgamingttv/fnv1-pxt#v1.2.5"
     },
     "files": [
         "main.blocks",

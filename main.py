@@ -28,13 +28,14 @@ def deleteClient(ID: number):
        return 0
 def commandHandler(Packet: List[any], Buffer2: number, serialN: number):
    global CMD1, unCMD1
-   serial.write_line("Packet received: " + ":" + str(Packet[1]))
+   serial.write_line("Packet received: " + ":" + ("" + str(Packet[1])))
+   serial.write_line("Packet received: " + ":" + ("" + str(Packet[1])) + "Serial number:" + str(serialN))
    for value in HDevID:
        if convert_to_text(FBV1(convert_to_text(serialN))) == convert_to_text(value):
            if Packet[1] == "CMD":
                CMD1 = convert_to_text(Packet[3])
                unCMD1 = CMD1.split(",")
-               serial.write_line("CHecking Command:" + unCMD1[0] + ":" + str(Packet[3]))
+               serial.write_line("CHecking Command:" + unCMD1[0] + ":" + ("" + str(Packet[3])))
                if unCMD1[0] == "reboot":
                    control.reset()
                    return 1
@@ -52,14 +53,7 @@ def commandHandler(Packet: List[any], Buffer2: number, serialN: number):
    serial.write_string("Could not authenticate " + ("" + str(serialN)) + " passing to Message Handler")
    return 0
 def FBV1(data: str):
-   global hash2, j
-   hash2 = 2166136261
-   j = 0
-   while j <= len(data) - 1:
-       b_val = data.char_code_at(j)
-       hash2 = hash2 * 16777619 & 0xffffffff
-       j += 1
-   return hash2
+   return sec.fnv_1a_hash(data)
 def packetHandler(serialN2: number, Signal_strength: number, Data: str, buffer: number):
    global Packet2
    Packet2 = []
@@ -96,15 +90,16 @@ def packetHelper(From: number, Mode: number, To: number, data2: str, buffer2: nu
            return 0
    return 0
 def boot():
-   global bState
+   global channel, bState, MClients
+   channel = 0
    bState = 0
+   MClients = 15
    config()
    Diagnostic()
    serial.write_numbers(Clients)
    serial.write_numbers(clientvirtualmap)
    serial.write_numbers(Lease)
    serial.write_numbers(HDevID)
-   radio.set_group(0)
    serial.write_line("AIOS-DSPS-1")
    serial.write_line(control.device_name())
    serial.write_line("Serial Number:" + ("" + str(control.device_serial_number())))
@@ -117,7 +112,11 @@ def boot():
    else:
        print(":)")
 def config():
-   global DevID, HDevID, result, MClients, proName, hSerial, LeaseT, leaseMs
+   global Lease, clientvirtualmap, Clients, DevID, HDevID, result, proName, hSerial, LeaseT, leaseMs
+   radio.set_group(channel)
+   Lease = []
+   clientvirtualmap = []
+   Clients = []
    for index5 in range(MClients):
        Clients.append(0)
        clientvirtualmap.append(0)
@@ -132,7 +131,6 @@ def config():
        result = FBV1(convert_to_text(value2))
        HDevID.append(result)
    result = 0
-   MClients = 15
    proName = "A.I-Mobile"
    hSerial = FBV1(convert_to_text(control.device_serial_number()))
    LeaseT = 3
@@ -200,6 +198,28 @@ def leaseCheck():
                serial.write_line("Client Lease Expired")
                deleteClient(Clients[Tindex])
        Tindex += 1
+def SerialHandler(message: str, param1: str, Param2: str):
+   if message.includes("help"):
+       serial.write_line("-- WiredOS V1.90 based on AIOS --")
+       serial.write_line("channel")
+       serial.write_line("client")
+       serial.write_line("Diagnostic")
+       serial.write_line("unlock")
+       serial.write_line("lock")
+   elif False:
+       pass
+   elif False:
+       pass
+   elif False:
+       pass
+   elif False:
+       pass
+   elif False:
+       pass
+   elif False:
+       pass
+   else:
+       serial.write_line("Command not found")
 def Diagnostic():
    global fakepacket
    if ClientHelper(421, 0):
@@ -223,7 +243,7 @@ def Diagnostic():
    fakepacket = ["192", "CMD", "999", "Channel,1"]
    serial.write_string("" + (fakepacket[0]))
    serial.write_line("Beginning Command handler check")
-   if commandHandler(fakepacket, len(fakepacket), HDevID[0]) == 1:
+   if commandHandler(fakepacket, len(fakepacket), DevID[0]) == 1:
        pass
    else:
        control.wait_micros(4000000)
@@ -241,15 +261,15 @@ result = 0
 DevID: List[number] = []
 hSerial = 0
 bState = 0
-j = 0
-unCMD1: List[str] = []
-CMD1 = ""
+channel = 0
 HDevID: List[number] = []
 index4 = 0
 Lease: List[number] = []
 clientvirtualmap: List[number] = []
 MClients = 0
 Clients: List[number] = []
+unCMD1: List[str] = []
+CMD1 = ""
 hash2 = 0
 k = 0
 Packet2: List[str] = []
