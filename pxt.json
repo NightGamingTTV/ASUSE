@@ -5,7 +5,8 @@
     "dependencies": {
         "core": "*",
         "radio": "*",
-        "microphone": "*"
+        "microphone": "*",
+        "FNV1-PXT": "github:nightgamingttv/fnv1-pxt#v1.2.6"
     },
     "files": [
         "main.blocks",

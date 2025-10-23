@@ -32,13 +32,13 @@ function deleteClient(ID: number): number {
 
 function commandHandler(Packet: any[], Buffer2: number, serialN: number): number {
     
-    serial.writeLine("Packet received: " + ":" + ("" + Packet[1]))
+    serial.writeLine("Packet received: " + ":" + ("" + ("" + Packet[1])))
     for (let value of HDevID) {
         if (convertToText(FBV1(convertToText(serialN))) == convertToText(value)) {
             if (Packet[1] == "CMD") {
                 CMD1 = convertToText(Packet[3])
                 unCMD1 = _py.py_string_split(CMD1, ",")
-                serial.writeLine("CHecking Command:" + unCMD1[0] + ":" + ("" + Packet[3]))
+                serial.writeLine("CHecking Command:" + unCMD1[0] + ":" + ("" + ("" + Packet[3])))
                 if (unCMD1[0] == "reboot") {
                     control.reset()
                     return 1
@@ -310,17 +310,17 @@ let DevID : number[] = []
 let hSerial = 0
 let bState = 0
 let j = 0
-let unCMD1 : string[] = []
-let CMD1 = ""
 let HDevID : number[] = []
 let index4 = 0
 let Lease : number[] = []
 let clientvirtualmap : number[] = []
 let MClients = 0
 let Clients : number[] = []
-let hash2 = 0
-let k = 0
 let Packet2 : string[] = []
+let k = 0
+let hash2 = 0
+let CMD1 = ""
+let unCMD1 : string[] = []
 Clients = [0]
 MClients = 15
 Clients = []
