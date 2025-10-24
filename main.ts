@@ -28,11 +28,39 @@ function deleteClient(ID: number) {
         Lease[virtualIndex] = 0
         return 1
     }
-
-    
     return 0
 }
+serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+    let message = serial.readUntil(serial.delimiters(Delimiters.NewLine))
+    let Dpacket = message.split(" ")
 
+    serialHandler(Dpacket)
+})
+
+function serialHandler(data: any[]) {
+    if (data[0] == "clients"){
+
+        for (let i = 0; i < Clients.length; i++) {
+            serial.writeNumber(Clients[i])
+            
+        }
+        
+    }
+    if (data[0] == "remove") {
+        if (data[1]) {
+            if (deleteClient(parseInt(data[1])) == 1) {
+                serial.writeString("Client deleted:${data[1]}")
+            }
+
+        }
+    }
+
+return
+
+
+
+
+}
 function commandHandler(Packet: any[], Buffer2: number, serialN: number): number {
     
     serial.writeLine("Packet received: " + ":" + ("" + ("" + Packet[1])))
