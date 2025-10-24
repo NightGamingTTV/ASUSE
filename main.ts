@@ -69,15 +69,7 @@ function commandHandler(Packet: any[], Buffer2: number, serialN: number): number
 }
 
 function FBV1(data: string): number {
-    let b_val: number;
-    
-    hash2 = 2166136261
-    j = 0
-    while (j <= data.length - 1) {
-        b_val = data.charCodeAt(j)
-        hash2 = hash2 * 16777619 & 0xffffffff
-        j += 1
-    }
+    hash2 = sec.FNV1aHash(data)
     return hash2
 }
 
@@ -287,7 +279,7 @@ function Diagnostic(): number {
     fakepacket = ["192", "CMD", "999", "Channel,1"]
     serial.writeString("" + fakepacket[0])
     serial.writeLine("Beginning Command handler check")
-    if (commandHandler(fakepacket, fakepacket.length, HDevID[0]) == 1) {
+    if (commandHandler(fakepacket, fakepacket.length, DevID[0]) == 1) {
         console.log("command handler: PASS")
     } else {
         console.log("command handler: FAILED")
