@@ -9,25 +9,28 @@ function MSGHandler(Spacket: string[]) {
     
 }
 
-function deleteClient(ID: number): number {
-    
-    serial.writeLine("Client:" + ("" + ("" + ID)) + ",Update:Removed," + ("TimeStamp:" + ("" + ("" + control.millis()))))
-    if (convertToText(ID).length <= 2 && convertToText(ID).length > 0) {
-        index4 = clientvirtualmap.indexOf(ID)
-        clientvirtualmap[index4] = 0
-        Clients[index4] = 0
-        Lease[index4] = 0
+function deleteClient(ID: number) {
+    serial.writeLine("Client:" + ID + ",Update:Removed,TimeStamp:" + control.millis())
+
+    let physIndex = Clients.indexOf(ID)
+    if (physIndex != -1) {
+        // found physical client id
+        Clients[physIndex] = 0
+        clientvirtualmap[physIndex] = 0
+        Lease[physIndex] = 0
         return 1
-    } else if (convertToText(ID).length == 3) {
-        index4 = Clients.indexOf(ID)
-        Clients[index4] = 0
-        clientvirtualmap[index4] = 0
-        Lease[index4] = 0
-        return 1
-    } else {
-        return 0
     }
+
+    let virtualIndex = clientvirtualmap.indexOf(ID)
+    if (virtualIndex != -1) {
+        Clients[virtualIndex] = 0
+        clientvirtualmap[virtualIndex] = 0
+        Lease[virtualIndex] = 0
+        return 1
+    }
+
     
+    return 0
 }
 
 function commandHandler(Packet: any[], Buffer2: number, serialN: number): number {
