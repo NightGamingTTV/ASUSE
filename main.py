@@ -6,35 +6,34 @@ def MSGHandler(Spacket: List[str]):
             Spacket[3],
             len(Spacket[3]))
     elif Spacket[1] == "JN":
-        ClientHelper(parse_float(Spacket[0]), 0)
+        addClient(parse_float(Spacket[0]))
     else:
         packetHelper(999, 0, parse_float(Spacket[0]), "failed", 6)
 def deleteClient(ID: number):
-    global index4
-    serial.write_line("Client:" + ("" + str(ID)) + ",Update:Removed," + ("TimeStamp:" + ("" + str(control.millis()))))
-    if len(convert_to_text(ID)) <= 2 and len(convert_to_text(ID)) > 0:
-        index4 = clientvirtualmap.index_of(ID)
-        clientvirtualmap[index4] = 0
-        Clients[index4] = 0
-        Lease[index4] = 0
+    serial.write_line("Client:" + str(ID) + ",Update:Removed,TimeStamp:" + str(control.millis()))
+    physIndex = Clients.index_of(ID)
+    if physIndex != -1:
+        # found physical client id
+        Clients[physIndex] = 0
+        clientvirtualmap[physIndex] = 0
+        Lease[physIndex] = 0
         return 1
-    elif len(convert_to_text(ID)) == 3:
-        index4 = Clients.index_of(ID)
-        Clients[index4] = 0
-        clientvirtualmap[index4] = 0
-        Lease[index4] = 0
+    virtualIndex = clientvirtualmap.index_of(ID)
+    if virtualIndex != -1:
+        Clients[virtualIndex] = 0
+        clientvirtualmap[virtualIndex] = 0
+        Lease[virtualIndex] = 0
         return 1
-    else:
-        return 0
+    return 0
 def commandHandler(Packet: List[any], Buffer2: number, serialN: number):
     global CMD1, unCMD1
-    serial.write_line("Packet received: " + ":" + ("" + str(Packet[1])))
+    serial.write_line("Packet received: " + ":" + ("" + ("" + str(Packet[1]))))
     for value in HDevID:
         if convert_to_text(FBV1(convert_to_text(serialN))) == convert_to_text(value):
             if Packet[1] == "CMD":
                 CMD1 = convert_to_text(Packet[3])
                 unCMD1 = CMD1.split(",")
-                serial.write_line("CHecking Command:" + unCMD1[0] + ":" + ("" + str(Packet[3])))
+                serial.write_line("CHecking Command:" + unCMD1[0] + ":" + ("" + ("" + str(Packet[3]))))
                 if unCMD1[0] == "reboot":
                     control.reset()
                     return 1
@@ -49,16 +48,11 @@ def commandHandler(Packet: List[any], Buffer2: number, serialN: number):
                 MSGHandler(Packet)
                 return 0
     MSGHandler(Packet)
-    serial.write_string("Could not authenticate " + ("" + str(serialN)) + " passing to Message Handler")
+    serial.write_string("Could not authenticate " + ("" + ("" + str(serialN))) + " passing to Message Handler")
     return 0
 def FBV1(data: str):
-    global hash2, j
-    hash2 = 2166136261
-    j = 0
-    while j <= len(data) - 1:
-        b_val = data.char_code_at(j)
-        hash2 = hash2 * 16777619 & 0xffffffff
-        j += 1
+    global hash2
+    hash2 = sec.fnv_1a_hash(data)
     return hash2
 def packetHandler(serialN2: number, Signal_strength: number, Data: str, buffer: number):
     global Packet2
@@ -67,27 +61,27 @@ def packetHandler(serialN2: number, Signal_strength: number, Data: str, buffer: 
         if serialN2 != 0:
             Packet2 = Data.split(":")
             if len(Packet2) == 4:
-                ClientHelper(5, parse_float(Packet2[0]))
+                updateLease(parse_float(Packet2[0]))
                 commandHandler(Packet2, len(Packet2), serialN2)
             else:
-                serial.write_string("Malformed packet:" + ("" + str(Packet2)))
+                serial.write_string("Malformed packet:" + ("" + ("" + str(Packet2))))
         else:
             serial.write_string("untrusted packet")
             Packet2 = Data.split(":")
             if len(Packet2) == 4:
                 MSGHandler(Packet2)
             else:
-                serial.write_string("Malformed packet:" + ("" + str(Packet2)))
+                serial.write_string("Malformed packet:" + ("" + ("" + str(Packet2))))
     else:
-        serial.write_string("Packet Dropped: " + "Data Size:" + str(len(Data)) + "Buffer size: " + ("" + str(buffer)))
+        serial.write_string("Packet Dropped: " + "Data Size:" + ("" + str(len(Data))) + "Buffer size: " + ("" + ("" + str(buffer))))
     return 0
 def packetHelper(From: number, Mode: number, To: number, data2: str, buffer2: number):
     if len(data2) == buffer2:
         if Mode == 0:
-            radio.send_string("" + str(From) + ":" + "SMSG" + ":" + ("" + str(To)) + ":" + data2)
+            radio.send_string("" + ("" + str(From)) + ":" + "SMSG" + ":" + ("" + ("" + str(To))) + ":" + data2)
             return 1
         elif Mode == 1:
-            radio.send_string("" + str(ClientHelper(From, 2)) + ":" + "MSG" + ":" + ("" + str(ClientHelper(To, 1))) + ":" + data2)
+            radio.send_string("" + ("" + str(lookupV(From))) + ":" + "MSG" + ":" + ("" + ("" + str(lookupS(To)))) + ":" + data2)
             return 1
         elif Mode == 2:
             radio.send_string("999" + ":" + "BRD" + ":" + "0" + ":" + data2)
@@ -107,10 +101,10 @@ def boot():
     radio.set_group(0)
     serial.write_line("AIOS-DSPS-1")
     serial.write_line(control.device_name())
-    serial.write_line("Serial Number:" + ("" + str(control.device_serial_number())))
-    serial.write_line("" + str(FBV1(convert_to_text(control.device_serial_number()))))
-    serial.write_line("Boot Time:" + ("" + str(control.millis())))
-    serial.write_line("Hash:" + ("" + str(hSerial)))
+    serial.write_line("Serial Number:" + ("" + ("" + str(control.device_serial_number()))))
+    serial.write_line("" + ("" + str(FBV1(convert_to_text(control.device_serial_number())))))
+    serial.write_line("Boot Time:" + ("" + ("" + str(control.millis()))))
+    serial.write_line("Hash:" + ("" + ("" + str(hSerial))))
     basic.pause(2000)
     if input.button_is_pressed(Button.AB):
         pass
@@ -138,9 +132,9 @@ def config():
     LeaseT = 3
     leaseMs = LeaseT * 60000
     serial.write_line(proName)
-    serial.write_line("SN: " + ("" + str(hSerial)))
-    serial.write_line("Max Clients: " + ("" + str(MClients)))
-    serial.write_line("Lease time: " + ("" + str(LeaseT)) + "M")
+    serial.write_line("SN: " + ("" + ("" + str(hSerial))))
+    serial.write_line("Max Clients: " + ("" + ("" + str(MClients))))
+    serial.write_line("Lease time: " + ("" + ("" + str(LeaseT))) + "M")
     serial.write_line("")
 
 def on_received_string(receivedString):
@@ -150,46 +144,44 @@ def on_received_string(receivedString):
         len(receivedString))
 radio.on_received_string(on_received_string)
 
-def ClientHelper(SRC: number, mode: number):
+def addClient(SRC: number):
     global index2
-    if mode == 0:
-        serial.write_line("" + str(Clients.index_of(SRC)))
-        if Clients.index_of(SRC) == -1:
-            index3 = 0
-            index2 = 0
-            index = 0
-            serial.write_line("max Clients:" + ("" + str(MClients)))
-            while index3 < MClients:
-                if Clients[index3] == 0:
-                    Clients[index3] = SRC
-                    clientvirtualmap[index3] = index3 + 1
-                    Lease[index3] = input.running_time()
-                    return 1
-                index3 += 1
-            serial.write_line("ERROR")
-            return 0
-        return 1
-    elif mode == 1:
-        if clientvirtualmap.index_of(SRC) != -1:
-            index2 = clientvirtualmap.index_of(SRC)
-            return Clients[index2]
+    serial.write_line("" + ("" + str(Clients.index_of(SRC))))
+    if Clients.index_of(SRC) == -1:
+        index3 = 0
+        index2 = 0
+        index = 0
+        serial.write_line("max Clients:" + ("" + ("" + str(MClients))))
+        while index3 < MClients:
+            if Clients[index3] == 0:
+                Clients[index3] = SRC
+                clientvirtualmap[index3] = index3 + 1
+                Lease[index3] = input.running_time()
+                return 1
+            index3 += 1
+        serial.write_line("ERROR")
         return 0
-    elif mode == 2:
-        if Clients.index_of(SRC) != -1:
-            index2 = Clients.index_of(SRC)
-            return clientvirtualmap[index2]
-    elif mode == 3:
-        pass
-    elif mode == 4:
-        if Clients.index_of(SRC) != -1:
-            Lease[Clients.index_of(SRC)] = input.running_time()
-        else:
-            return 0
+    return 0
+def lookupS(SRC2: number):
+    global index2
+    if clientvirtualmap.index_of(SRC2) != -1:
+        index2 = clientvirtualmap.index_of(SRC2)
+        return Clients[index2]
+    return 0
+def lookupV(SRC3: number):
+    global index2
+    if Clients.index_of(SRC3) != -1:
+        index2 = Clients.index_of(SRC3)
+        return clientvirtualmap[index2]
+    return 0
+def updateLease(SRC4: number):
+    if Clients.index_of(SRC4) != -1:
+        Lease[Clients.index_of(SRC4)] = input.running_time()
     else:
-        pass
+        return 0
     return 0
 def leaseCheck():
-    global currentTime, Tindex
+    global currentTime
     currentTime = input.running_time()
     Tindex = 0
     while Tindex < MClients:
@@ -200,11 +192,11 @@ def leaseCheck():
         Tindex += 1
 def Diagnostic():
     global fakepacket
-    if ClientHelper(421, 0):
+    if addClient(421):
         serial.write_line("Array Check: PASS")
-        if ClientHelper(421, 2) != 0:
+        if lookupV(421) != 0:
             serial.write_line("Real to VMAP: PASS")
-            if ClientHelper(1, 1) != 0:
+            if lookupS(1) != 0:
                 serial.write_line("VMAP to Real: PASS")
             else:
                 serial.write_line("VMAP to Real: FAIL")
@@ -219,9 +211,9 @@ def Diagnostic():
         serial.write_line("VMAP to Real: N/A")
         return 0
     fakepacket = ["192", "CMD", "999", "Channel,1"]
-    serial.write_string("" + (fakepacket[0]))
+    serial.write_string("" + fakepacket[0])
     serial.write_line("Beginning Command handler check")
-    if commandHandler(fakepacket, len(fakepacket), HDevID[0]) == 1:
+    if commandHandler(fakepacket, len(fakepacket), DevID[0]) == 1:
         print("command handler: PASS")
     else:
         print("command handler: FAILED")
@@ -230,7 +222,7 @@ def Diagnostic():
     deleteClient(421)
     return 1
 fakepacket: List[str] = []
-Tindex = 0
+Tindex2 = 0
 currentTime = 0
 index2 = 0
 leaseMs = 0

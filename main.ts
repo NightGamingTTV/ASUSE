@@ -228,65 +228,11 @@ function updateLease(SRC:number): number {
     }
     return 0
 }
-function ClientHelper(SRC: number, mode: number): number {
-    let index3: number;
-    let index: number;
-    
-    if (mode == 0) {
-        serial.writeLine("" + ("" + Clients.indexOf(SRC)))
-        if (Clients.indexOf(SRC) == -1) {
-            index3 = 0
-            index2 = 0
-            index = 0
-            serial.writeLine("max Clients:" + ("" + ("" + MClients)))
-            while (index3 < MClients) {
-                if (Clients[index3] == 0) {
-                    Clients[index3] = SRC
-                    clientvirtualmap[index3] = index3 + 1
-                    Lease[index3] = input.runningTime()
-                    return 1
-                }
-                
-                index3 += 1
-            }
-            serial.writeLine("ERROR")
-            return 0
-        }
-        
-        return 1
-    } else if (mode == 1) {
-        if (clientvirtualmap.indexOf(SRC) != -1) {
-            index2 = clientvirtualmap.indexOf(SRC)
-            return Clients[index2]
-        }
-        
-        return 0
-    } else if (mode == 2) {
-        if (Clients.indexOf(SRC) != -1) {
-            index2 = Clients.indexOf(SRC)
-            return clientvirtualmap[index2]
-        }
-        
-    } else if (mode == 3) {
-        
-    } else if (mode == 4) {
-        if (Clients.indexOf(SRC) != -1) {
-            Lease[Clients.indexOf(SRC)] = input.runningTime()
-        } else {
-            return 0
-        }
-        
-    } else {
-        
-    }
-    
-    return 0
-}
 
 function leaseCheck() {
     
     currentTime = input.runningTime()
-    Tindex = 0
+    let Tindex = 0
     while (Tindex < MClients) {
         if (Clients[Tindex] != 0) {
             if (Math.abs(Lease[Tindex] - currentTime) >= leaseMs) {
