@@ -2,7 +2,7 @@ function MSGHandler(Spacket: string[]) {
     if (Spacket[1] == "MSG") {
         packetHelper(parseFloat(Spacket[0]), 1, parseFloat(Spacket[2]), Spacket[3], Spacket[3].length)
     } else if (Spacket[1] == "JN") {
-        ClientHelper(parseFloat(Spacket[0]), 0)
+        addClient(parseFloat(Spacket[0]))
     } else {
         packetHelper(999, 0, parseFloat(Spacket[0]), "failed", 6)
     }
@@ -83,7 +83,7 @@ function packetHandler(serialN2: number, Signal_strength: number, Data: string, 
         if (serialN2 != 0) {
             Packet2 = _py.py_string_split(Data, ":")
             if (Packet2.length == 4) {
-                ClientHelper(5, parseFloat(Packet2[0]))
+                updateLease(parseFloat(Packet2[0]))
                 commandHandler(Packet2, Packet2.length, serialN2)
             } else {
                 serial.writeString("Malformed packet:" + ("" + ("" + Packet2)))
@@ -113,7 +113,7 @@ function packetHelper(From: number, Mode: number, To: number, data2: string, buf
             radio.sendString("" + ("" + From) + ":" + "SMSG" + ":" + ("" + ("" + To)) + ":" + data2)
             return 1
         } else if (Mode == 1) {
-            radio.sendString("" + ("" + ClientHelper(From, 2)) + ":" + "MSG" + ":" + ("" + ("" + ClientHelper(To, 1))) + ":" + data2)
+            radio.sendString("" + ("" + lookupV(From)) + ":" + "MSG" + ":" + ("" + ("" +lookupS(To))) + ":" + data2)
             return 1
         } else if (Mode == 2) {
             radio.sendString("999" + ":" + "BRD" + ":" + "0" + ":" + data2)
@@ -181,6 +181,53 @@ function config() {
 radio.onReceivedString(function on_received_string(receivedString: string) {
     packetHandler(radio.receivedPacket(RadioPacketProperty.SerialNumber), radio.receivedPacket(RadioPacketProperty.SignalStrength), receivedString, receivedString.length)
 })
+function addClient(SRC: number): number {
+    let index3: number;
+    let index: number;
+    serial.writeLine("" + ("" + Clients.indexOf(SRC)))
+    if (Clients.indexOf(SRC) == -1) {
+        index3 = 0
+        index2 = 0
+        index = 0
+        serial.writeLine("max Clients:" + ("" + ("" + MClients)))
+        while (index3 < MClients) {
+            if (Clients[index3] == 0) {
+                Clients[index3] = SRC
+                clientvirtualmap[index3] = index3 + 1
+                Lease[index3] = input.runningTime()
+                return 1
+            }
+
+            index3 += 1
+        }
+        serial.writeLine("ERROR")
+        return 0
+    }
+    return 0
+}
+function lookupS(SRC: number): number {
+    if (clientvirtualmap.indexOf(SRC) != -1) {
+        index2 = clientvirtualmap.indexOf(SRC)
+        return Clients[index2]
+    }
+
+    return 0
+}
+function lookupV(SRC: number): number {
+    if (Clients.indexOf(SRC) != -1) {
+        index2 = Clients.indexOf(SRC)
+        return clientvirtualmap[index2]
+    }
+    return 0
+}
+function updateLease(SRC:number): number {
+    if (Clients.indexOf(SRC) != -1) {
+        Lease[Clients.indexOf(SRC)] = input.runningTime()
+    } else {
+        return 0
+    }
+    return 0
+}
 function ClientHelper(SRC: number, mode: number): number {
     let index3: number;
     let index: number;
@@ -255,11 +302,11 @@ function leaseCheck() {
 
 function Diagnostic(): number {
     
-    if (ClientHelper(421, 0)) {
+    if ( addClient(421)) {
         serial.writeLine("Array Check: PASS")
-        if (ClientHelper(421, 2) != 0) {
+        if (lookupV(421) != 0) {
             serial.writeLine("Real to VMAP: PASS")
-            if (ClientHelper(1, 1) != 0) {
+            if (lookupS(1)!= 0) {
                 serial.writeLine("VMAP to Real: PASS")
             } else {
                 serial.writeLine("VMAP to Real: FAIL")
