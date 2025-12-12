@@ -1,3 +1,8 @@
+enum settings {
+    clients = 15,
+    channel = 200,
+    LeaseTime = 3
+}
 function MSGHandler(Spacket: string[]) {
     if (Spacket[1] == "MSG") {
         packetHelper(parseFloat(Spacket[0]), 1, parseFloat(Spacket[2]), Spacket[3], Spacket[3].length)
@@ -68,8 +73,8 @@ function commandHandler(Packet: any[], Buffer2: number, serialN: number): number
         if (convertToText(FBV1(convertToText(serialN))) == convertToText(value)) {
             if (Packet[1] == "CMD") {
                 CMD1 = convertToText(Packet[3])
-                unCMD1 = _py.py_string_split(CMD1, ",")
-                serial.writeLine("CHecking Command:" + unCMD1[0] + ":" + ("" + ("" + Packet[3])))
+                unCMD1 = CMD1.split(",")
+                serial.writeLine("Checking Command:" + unCMD1[0] + ":" + ("" + ("" + Packet[3])))
                 if (unCMD1[0] == "reboot") {
                     control.reset()
                     return 1
@@ -109,7 +114,7 @@ function packetHandler(serialN2: number, Signal_strength: number, Data: string, 
     Packet2 = []
     if (Data.length == buffer) {
         if (serialN2 != 0) {
-            Packet2 = _py.py_string_split(Data, ":")
+            Packet2 = Data.split(":")
             if (Packet2.length == 4) {
                 updateLease(parseFloat(Packet2[0]))
                 commandHandler(Packet2, Packet2.length, serialN2)
@@ -119,7 +124,7 @@ function packetHandler(serialN2: number, Signal_strength: number, Data: string, 
             
         } else {
             serial.writeString("untrusted packet")
-            Packet2 = _py.py_string_split(Data, ":")
+            Packet2 = Data.split(":")
             if (Packet2.length == 4) {
                 MSGHandler(Packet2)
             } else {
@@ -157,6 +162,8 @@ function packetHelper(From: number, Mode: number, To: number, data2: string, buf
 
 function boot() {
     
+    SystemInfo = sec.sysInfo()
+    hexSystemInfo = SystemInfo.toHex()
     bState = 0
     config()
     Diagnostic()
@@ -164,12 +171,12 @@ function boot() {
     serial.writeNumbers(clientvirtualmap)
     serial.writeNumbers(Lease)
     serial.writeNumbers(HDevID)
-    radio.setGroup(0)
+    radio.setGroup(settings.channel)
     serial.writeLine("AIOS-DSPS-1")
     serial.writeLine(control.deviceName())
-    serial.writeLine("Serial Number:" + ("" + ("" + control.deviceSerialNumber())))
+    serial.writeLine("Serial Number:" + control.deviceSerialNumber())
     serial.writeLine("" + ("" + FBV1(convertToText(control.deviceSerialNumber()))))
-    serial.writeLine("Boot Time:" + ("" + ("" + control.millis())))
+    serial.writeLine("Boot Time:" + control.millis())
     serial.writeLine("Hash:" + ("" + ("" + hSerial)))
     basic.pause(2000)
     if (input.buttonIsPressed(Button.AB)) {
@@ -182,7 +189,7 @@ function boot() {
 
 function config() {
     
-    for (let index5 = 0; index5 < MClients; index5++) {
+    for (let index5 = 0; index5 < settings.clients; index5++) {
         Clients.push(0)
         clientvirtualmap.push(0)
         Lease.push(0)
@@ -194,16 +201,13 @@ function config() {
         HDevID.push(result)
     }
     result = 0
-    MClients = 15
     proName = "A.I-Mobile"
     hSerial = FBV1(convertToText(control.deviceSerialNumber()))
-    LeaseT = 3
-    leaseMs = LeaseT * 60000
+    leaseMs = settings.LeaseTime * 60000
     serial.writeLine(proName)
-    serial.writeLine("SN: " + ("" + ("" + hSerial)))
-    serial.writeLine("Max Clients: " + ("" + ("" + MClients)))
-    serial.writeLine("Lease time: " + ("" + ("" + LeaseT)) + "M")
-    serial.writeLine("")
+    serial.writeLine("SN: " + hSerial)
+    serial.writeLine("Max Clients: " + settings.clients)
+    serial.writeLine("Lease time: " + settings.LeaseTime + "M")
 }
 
 radio.onReceivedString(function on_received_string(receivedString: string) {
@@ -217,8 +221,8 @@ function addClient(SRC: number): number {
         index3 = 0
         index2 = 0
         index = 0
-        serial.writeLine("max Clients:" + ("" + ("" + MClients)))
-        while (index3 < MClients) {
+        serial.writeLine("max Clients:" + ("" + ("" + settings.clients)))
+        while (index3 < settings.clients) {
             if (Clients[index3] == 0) {
                 Clients[index3] = SRC
                 clientvirtualmap[index3] = index3 + 1
@@ -261,7 +265,7 @@ function leaseCheck() {
     
     currentTime = input.runningTime()
     let Tindex = 0
-    while (Tindex < MClients) {
+    while (Tindex < settings.clients) {
         if (Clients[Tindex] != 0) {
             if (Math.abs(Lease[Tindex] - currentTime) >= leaseMs) {
                 serial.writeLine("Client Lease Expired")
@@ -314,13 +318,13 @@ function Diagnostic(): number {
     deleteClient(421)
     return 1
 }
-
+let hexSystemInfo =  null
+let SystemInfo = null
 let fakepacket : string[] = []
 let Tindex = 0
 let currentTime = 0
 let index2 = 0
 let leaseMs = 0
-let LeaseT = 0
 let proName = ""
 let result = 0
 let DevID : number[] = []
@@ -331,7 +335,6 @@ let HDevID : number[] = []
 let index4 = 0
 let Lease : number[] = []
 let clientvirtualmap : number[] = []
-let MClients = 0
 let Clients : number[] = []
 let Packet2 : string[] = []
 let k = 0
@@ -339,7 +342,6 @@ let hash2 = 0
 let CMD1 = ""
 let unCMD1 : string[] = []
 Clients = [0]
-MClients = 15
 Clients = []
 clientvirtualmap = []
 Lease = []

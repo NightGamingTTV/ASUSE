@@ -6,7 +6,7 @@
         "core": "*",
         "radio": "*",
         "microphone": "*",
-        "FNV1-PXT": "github:nightgamingttv/fnv1-pxt#v1.2.6"
+        "FNV1-PXT": "github:nightgamingttv/fnv1-pxt#v1.3.0"
     },
     "files": [
         "main.blocks",
@@ -18,7 +18,7 @@
         "test.ts"
     ],
     "targetVersions": {
-        "target": "8.0.17",
+        "target": "8.0.18",
         "targetId": "microbit"
     },
     "supportedTargets": [
